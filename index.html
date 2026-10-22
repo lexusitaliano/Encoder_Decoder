@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Encoder & Decoder</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+
 
     body {
       margin: 0;
       padding: 2rem;
-      font-family: 'Inter', sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background-color: #f5f7fa;
       color: #222;
       line-height: 1.5;
@@ -63,7 +63,7 @@
       border: 1.5px solid #ccd6e0;
       border-radius: 6px;
       resize: vertical;
-      font-family: 'Inter', sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       transition: border-color 0.3s ease;
       box-sizing: border-box;
       color: #0a2540;
@@ -154,7 +154,7 @@
       pointer-events: none;
       transition: opacity 0.3s ease;
       z-index: 9999;
-      font-family: 'Inter', sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       user-select: none;
     }
 
@@ -174,18 +174,41 @@
         flex: 1 1 100%;
       }
     }
+    [hidden] { display: none !important; }
+    button:focus-visible { outline: 3px solid #0a2540; outline-offset: 3px; }
+    button { min-height: 44px; }
+    .landing { text-align: center; padding-top: 3rem; padding-bottom: 3rem; }
+    .landing p { color: #33475b; margin-bottom: 2rem; }
+    .landing button { min-width: 160px; }
+    .app-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; max-width: 780px; margin: 0 auto 1rem; }
+    .app-header h1 { text-align: left; font-size: clamp(1.3rem, 5vw, 2rem); }
+    .app-header button { flex: none; padding-inline: 1rem; }
+    #sessionNotice { max-width: 700px; margin: 1rem auto; text-align: center; color: #0a2540; }
+    .container { box-sizing: border-box; }
+    @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
   </style>
 </head>
 <body>
 
-  <h1>Encoder & Decoder</h1>
+  <section id="landing" class="container landing" aria-labelledby="landingTitle">
+    <h1 id="landingTitle">Encoder &amp; Decoder</h1>
+    <p>A simple, offline workspace for your messages.</p>
+    <button id="enterButton" type="button">Enter</button>
+    <p><small>This privacy lock clears messages after 10 minutes of inactivity.<br>It is not authentication or secure encryption.</small></p>
+  </section>
+  <p id="sessionNotice" role="status" aria-live="polite" aria-atomic="true"></p>
+  <main id="application" hidden inert>
+    <header class="app-header">
+      <h1 id="appTitle" tabindex="-1">Encoder &amp; Decoder</h1>
+      <button id="logoutButton" type="button">Logout</button>
+    </header>
 
   <div class="container">
 
     <section aria-label="Message Encoder">
       <h2>Encode - Input</h2>
       <label for="messageInput">Enter input text</label>
-      <textarea id="messageInput" placeholder="Enter classified info here..." rows="4" oninput="autoResizeTextarea(this)"></textarea>
+      <textarea autocomplete="off" id="messageInput" placeholder="Enter classified info here..." rows="4" oninput="autoResizeTextarea(this)"></textarea>
 
         <div class="button-row">
     
@@ -201,7 +224,7 @@
       </div>
 
       <label for="encodedOutput" style="margin-top:1.5rem;">Encoded Output:</label>
-      <textarea id="encodedOutput" readonly rows="5" oninput="autoResizeTextarea(this)"></textarea>
+      <textarea autocomplete="off" id="encodedOutput" readonly rows="5" oninput="autoResizeTextarea(this)"></textarea>
 
       <div class="button-row">
         <button onclick="copyText('encodedOutput')">Copy Encoded</button>
@@ -213,7 +236,7 @@
     <section aria-label="Message Decoder">
       <h2>Decode - Output</h2>
       <label for="secretInput">Enter text to decode</label>
-      <textarea id="secretInput" placeholder="Paste intercepted code..." rows="4" oninput="autoResizeTextarea(this)"></textarea>
+      <textarea autocomplete="off" id="secretInput" placeholder="Paste intercepted code..." rows="4" oninput="autoResizeTextarea(this)"></textarea>
 
          <div class="button-row">
             <button class="paste-button" onclick="pasteClipboardText('secretInput')">Paste Copied</button>
@@ -225,7 +248,7 @@
       </div>
 
       <label for="decodedOutput" style="margin-top:1.5rem;">Decoded Output:</label>
-      <textarea id="decodedOutput" readonly rows="5" oninput="autoResizeTextarea(this)"></textarea>
+      <textarea autocomplete="off" id="decodedOutput" readonly rows="5" oninput="autoResizeTextarea(this)"></textarea>
 
       <div class="button-row">
         <button onclick="copyText('decodedOutput')">Copy Decoded</button>
@@ -234,7 +257,8 @@
 
   </div>
 
-  <div id="copyTooltip">Copied!</div>
+  </main>
+  <div id="copyTooltip" role="status" aria-live="polite">Copied!</div>
 
   <script>
     const secretMap = {
@@ -265,6 +289,7 @@
     }
 
     function encodeAndShow() {
+      if (!validateSession()) return;
       const input = document.getElementById('messageInput').value;
       const encoded = encodeMessage(input);
       const output = document.getElementById('encodedOutput');
@@ -273,6 +298,7 @@
     }
 
     function decodeAndShow() {
+      if (!validateSession()) return;
       const input = document.getElementById('secretInput').value;
       const decoded = decodeMessage(input);
       const output = document.getElementById('decodedOutput');
@@ -310,24 +336,37 @@
       return decoded;
     }
 
-    function copyText(id) {
+    async function copyText(id) {
+      if (!validateSession()) return;
+      const generation = sessionGeneration;
       const el = document.getElementById(id);
       if (!el.value) return;
       el.select();
-      el.setSelectionRange(0, 99999);
-      navigator.clipboard.writeText(el.value).then(() => {
-        showCopyTooltip();
-      });
+      el.setSelectionRange(0, el.value.length);
+      try {
+        await navigator.clipboard.writeText(el.value);
+        if (generation === sessionGeneration && validateSession()) showCopyTooltip();
+      } catch {
+        if (generation === sessionGeneration && validateSession()) {
+          document.getElementById('sessionNotice').textContent = 'Copy unavailable. Select the output and copy it manually.';
+        }
+      }
     }
 
-    function pasteClipboardText(id) {
-      navigator.clipboard.readText().then(text => {
+    async function pasteClipboardText(id) {
+      if (!validateSession()) return;
+      const generation = sessionGeneration;
+      try {
+        const text = await navigator.clipboard.readText();
+        if (generation !== sessionGeneration || !validateSession()) return;
         const el = document.getElementById(id);
         el.value += text;
         autoResizeTextarea(el);
-      }).catch(err => {
-        alert('Failed to paste clipboard content: ' + err);
-      });
+      } catch {
+        if (generation === sessionGeneration && validateSession()) {
+          document.getElementById('sessionNotice').textContent = 'Paste unavailable. Paste into the input manually.';
+        }
+      }
     }
 
     function showCopyTooltip() {
@@ -350,9 +389,121 @@
       autoResizeTextarea(document.getElementById('decodedOutput'));
     }
 
-    window.addEventListener('load', () => {
+    const SESSION_KEY = 'encoderDecoderLastActivity';
+    const INACTIVITY_MS = 600000;
+    let lastActivity = 0;
+    let sessionGeneration = 0;
+    let expirationTimer;
+    const application = document.getElementById('application');
+    const landing = document.getElementById('landing');
+    const notice = document.getElementById('sessionNotice');
+
+    function storeActivity() {
+      try { sessionStorage.setItem(SESSION_KEY, String(lastActivity)); } catch { /* In-memory session still works. */ }
+    }
+
+    function clearMessages() {
+      document.querySelectorAll('textarea').forEach(el => {
+        el.value = '';
+        el.style.height = 'auto';
+      });
+      document.getElementById('copyTooltip').classList.remove('show');
+    }
+
+    function endSession(expired = false, moveFocus = true) {
+      clearMessages();
+      sessionGeneration++;
+      lastActivity = 0;
+      clearTimeout(expirationTimer);
+      try { sessionStorage.removeItem(SESSION_KEY); } catch { /* Storage may be unavailable. */ }
+      application.hidden = true;
+      application.inert = true;
+      landing.hidden = false;
+      notice.textContent = expired
+        ? 'Session expired due to inactivity. All messages have been cleared.'
+        : 'Logged out. All messages have been cleared.';
+      if (moveFocus) document.getElementById('enterButton').focus();
+    }
+
+    function scheduleExpiration() {
+      clearTimeout(expirationTimer);
+      expirationTimer = setTimeout(validateSession, Math.max(0, INACTIVITY_MS - (Date.now() - lastActivity)));
+    }
+
+    function validateSession() {
+      if (!lastActivity) return false;
+      const elapsed = Date.now() - lastActivity;
+      if (elapsed < 0 || elapsed >= INACTIVITY_MS) {
+        endSession(true);
+        return false;
+      }
+      scheduleExpiration();
+      return true;
+    }
+
+    function showApplication(moveFocus = false) {
+      landing.hidden = true;
+      application.hidden = false;
+      application.inert = false;
       document.querySelectorAll('textarea').forEach(autoResizeTextarea);
+      if (moveFocus) document.getElementById('appTitle').focus();
+    }
+
+    document.getElementById('enterButton').addEventListener('click', () => {
+      clearMessages();
+      sessionGeneration++;
+      lastActivity = Date.now();
+      storeActivity();
+      notice.textContent = '';
+      showApplication(true);
+      scheduleExpiration();
     });
+    document.getElementById('logoutButton').addEventListener('click', () => endSession());
+
+    // Capture checks expiry before an interaction can renew or use a suspended session.
+    for (const type of ['keydown', 'pointerdown', 'touchstart', 'click', 'input']) {
+      document.addEventListener(type, event => {
+        if (!event.isTrusted || !lastActivity) return;
+        if (!validateSession()) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          return;
+        }
+        lastActivity = Date.now();
+        storeActivity();
+        scheduleExpiration();
+      }, true);
+    }
+
+    // Conceal before a page can enter BFCache; never retain message fields in history.
+    window.addEventListener('pagehide', () => {
+      clearMessages();
+      sessionGeneration++;
+      application.hidden = true;
+      application.inert = true;
+    });
+    function resumeSession() {
+      if (validateSession()) showApplication();
+      else clearMessages();
+    }
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        application.hidden = true;
+        application.inert = true;
+      } else resumeSession();
+    });
+    window.addEventListener('focus', resumeSession);
+    window.addEventListener('pageshow', () => {
+      clearMessages();
+      resumeSession();
+    });
+
+    clearMessages();
+    try {
+      const stored = Number(sessionStorage.getItem(SESSION_KEY));
+      if (Number.isFinite(stored) && stored > 0) lastActivity = stored;
+    } catch { /* Fall back to a fresh, in-memory session. */ }
+    resumeSession();
   </script>
 
 </body>
