@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>InteLex Secret Encoder & Decoder</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+
+    body {
+      margin: 0;
+      padding: 2rem;
+      font-family: 'Inter', sans-serif;
+      background-color: #f5f7fa;
+      color: #222;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    h1 {
+      font-weight: 600;
+      font-size: 2rem;
+      margin-bottom: 1rem;
+      color: #0a2540;
+      text-align: center;
+    }
+
+    h2 {
+      font-weight: 600;
+      font-size: 1.25rem;
+      margin-bottom: 0.75rem;
+      color: #0a2540;
+      border-bottom: 2px solid #0a2540;
+      padding-bottom: 0.25rem;
+    }
+
+    .container {
+      max-width: 700px;
+      margin: 0 auto;
+      background: #ffffff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      border-radius: 8px;
+      padding: 2rem 2.5rem;
+    }
+
+    section {
+      margin-bottom: 2.5rem;
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 0.4rem;
+      color: #33475b;
+      user-select: text;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 80px;
+      padding: 0.75rem 1rem;
+      font-size: 1rem;
+      border: 1.5px solid #ccd6e0;
+      border-radius: 6px;
+      resize: vertical;
+      font-family: 'Inter', sans-serif;
+      transition: border-color 0.3s ease;
+      box-sizing: border-box;
+      color: #0a2540;
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: #0052cc;
+      box-shadow: 0 0 5px rgba(0,82,204,0.5);
+      background-color: #f0f5ff;
+    }
+
+    textarea[readonly] {
+      background-color: #e9ecef;
+      color: #495057;
+      border-color: #ced4da;
+    }
+
+    .button-row {
+      margin-top: 1rem;
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    button {
+      background-color: #0052cc;
+      color: white;
+      border: none;
+      padding: 0.6rem 1.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.25s ease;
+      user-select: none;
+      flex: 1 1 120px;
+      text-align: center;
+    }
+
+    button:hover {
+      background-color: #003d99;
+    }
+
+    button:active {
+      background-color: #002d73;
+    }
+
+    .paste-button {
+      background-color: #cce4ff; /* pastel blue */
+      color: #003366;
+      border: none;
+      padding: 0.6rem 1.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.25s ease;
+      user-select: none;
+      flex: 1 1 120px;
+      text-align: center;
+    }
+
+    .paste-button:hover {
+      background-color: #b3d8ff;
+    }
+
+    .paste-button:active {
+      background-color: #99ccff;
+    }
+
+    hr {
+      border: none;
+      border-top: 1px solid #e1e4e8;
+      margin: 3rem 0;
+    }
+
+    #copyTooltip {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      background: #0052cc;
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 5px;
+      font-weight: 600;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      z-index: 9999;
+      font-family: 'Inter', sans-serif;
+      user-select: none;
+    }
+
+    #copyTooltip.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 1rem;
+      }
+      .container {
+        padding: 1.5rem 1.5rem;
+      }
+      button {
+        flex: 1 1 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>InteLex Secret Encoder & Decoder</h1>
+
+  <div class="container">
+
+    <section aria-label="Message Encoder">
+      <h2>Encode Message</h2>
+      <label for="messageInput">Enter message to encode:</label>
+      <textarea id="messageInput" placeholder="Enter classified info here..." rows="4" oninput="autoResizeTextarea(this)"></textarea>
+
+        <div class="button-row">
+    
+          <button class="paste-button" onclick="pasteClipboardText('messageInput')">Paste Copied</button>
+       
+        
+      </div>
+      <div class="button-row">
+        <button onclick="encodeAndShow()">Encode</button>
+        
+        <button onclick="clearEncodeFields()">Clear</button>
+        
+      </div>
+
+      <label for="encodedOutput" style="margin-top:1.5rem;">Encoded Output:</label>
+      <textarea id="encodedOutput" readonly rows="5" oninput="autoResizeTextarea(this)"></textarea>
+
+      <div class="button-row">
+        <button onclick="copyText('encodedOutput')">Copy Encoded</button>
+      </div>
+    </section>
+
+    <hr />
+
+    <section aria-label="Message Decoder">
+      <h2>Decode Message</h2>
+      <label for="secretInput">Paste encoded message here:</label>
+      <textarea id="secretInput" placeholder="Paste intercepted code..." rows="4" oninput="autoResizeTextarea(this)"></textarea>
+
+         <div class="button-row">
+            <button class="paste-button" onclick="pasteClipboardText('secretInput')">Paste Copied</button>
+      </div>
+      <div class="button-row">
+        <button onclick="decodeAndShow()">Decode</button>
+        <button onclick="clearDecodeFields()">Clear</button>
+      
+      </div>
+
+      <label for="decodedOutput" style="margin-top:1.5rem;">Decoded Output:</label>
+      <textarea id="decodedOutput" readonly rows="5" oninput="autoResizeTextarea(this)"></textarea>
+
+      <div class="button-row">
+        <button onclick="copyText('decodedOutput')">Copy Decoded</button>
+      </div>
+    </section>
+
+  </div>
+
+  <div id="copyTooltip">Copied!</div>
+
+  <script>
+    const secretMap = {
+      'A': '*71!', 'B': '3@#$', 'C': '99!!', 'D': '2^&*', 'E': 'x!8&', 'F': '!$3!', 'G': '7>~4', 'H': '*!!',
+      'I': '^^01', 'J': '&*#%', 'K': '$4@^', 'L': '1!2*', 'M': '7&@!', 'N': '!8^0', 'O': '8><*', 'P': '##!@',
+      'Q': '6*!)', 'R': '44@@', 'S': '**$#', 'T': '9^!$', 'U': '!>!<', 'V': '!?##', 'W': '3><@', 'X': '@@##',
+      'Y': '^!~*', 'Z': '0&*!',
+      'a': '!3$%', 'b': '4&*!', 'c': '#7@!', 'd': '%%^*', 'e': '<.!', 'f': '&@!$', 'g': '@!3#', 'h': '~##!',
+      'i': '0!0^', 'j': '^&*#', 'k': '!)4$', 'l': '9!0A', 'm': '$$!@', 'n': '8&!$', 'o': '88Ba*', 'p': '^^#@',
+      'q': '%$^!', 'r': '?!>!', 's': '@#!!', 't': '#!!$', 'u': '*@#$', 'v': '!&^^', 'w': '(!)@', 'x': '^#^@',
+      'y': '$!^&', 'z': '&$#^',
+      '0': 'Z1!#', '1': '#@A$', '2': 'C!$%', '3': '9Z*$', '4': '!L@#', '5': 'Q*!!', '6': 'X#4$', '7': 'R$9!',
+      '8': '$M@3', '9': 'P!0$', '.': '!@#$', ',': '&@^%', '?': '???!!', '!': '@!*!', '\'': '%*!@', '"': '@@!$',
+      ':': '*!!@', ';': ';;!@', '-': '--%%', '(': '((@@', ')': '))@@', '@': '@@@@', '#': '###$', '$': '$$$!',
+      '%': '%%%!', '^': '^^!!', '&': '&&&*', '*': '**!@', '+': '++@#', '=': '==!!', '/': '//@@', '\\': '\\\\@',
+      '<': '<<!!', '>': '>>!!', '[': '[[##', ']': ']]##', '{': '{{!!', '}': '}}!!', '`': '`!!@', '~': '~~!!',
+      '|': '|!|!', '_': '_!!_'
+    };
+
+    const decodeMap = {};
+    for (const [k, v] of Object.entries(secretMap)) {
+      decodeMap[v] = k;
+    }
+
+    function autoResizeTextarea(el) {
+      el.style.height = 'auto';
+      el.style.height = (el.scrollHeight) + 'px';
+    }
+
+    function encodeAndShow() {
+      const input = document.getElementById('messageInput').value;
+      const encoded = encodeMessage(input);
+      const output = document.getElementById('encodedOutput');
+      output.value = encoded;
+      autoResizeTextarea(output);
+    }
+
+    function decodeAndShow() {
+      const input = document.getElementById('secretInput').value;
+      const decoded = decodeMessage(input);
+      const output = document.getElementById('decodedOutput');
+      output.value = decoded;
+      autoResizeTextarea(output);
+    }
+
+    function encodeMessage(text) {
+      let encoded = '';
+      for (let ch of text) {
+        encoded += secretMap[ch] ?? ch;
+      }
+      return encoded;
+    }
+
+    function decodeMessage(text) {
+      let decoded = '';
+      let i = 0;
+      while (i < text.length) {
+        let matched = false;
+        for (let len = 5; len > 0; len--) {
+          let chunk = text.substr(i, len);
+          if (decodeMap[chunk]) {
+            decoded += decodeMap[chunk];
+            i += len;
+            matched = true;
+            break;
+          }
+        }
+        if (!matched) {
+          decoded += text[i];
+          i++;
+        }
+      }
+      return decoded;
+    }
+
+    function copyText(id) {
+      const el = document.getElementById(id);
+      if (!el.value) return;
+      el.select();
+      el.setSelectionRange(0, 99999);
+      navigator.clipboard.writeText(el.value).then(() => {
+        showCopyTooltip();
+      });
+    }
+
+    function pasteClipboardText(id) {
+      navigator.clipboard.readText().then(text => {
+        const el = document.getElementById(id);
+        el.value += text;
+        autoResizeTextarea(el);
+      }).catch(err => {
+        alert('Failed to paste clipboard content: ' + err);
+      });
+    }
+
+    function showCopyTooltip() {
+      const tooltip = document.getElementById('copyTooltip');
+      tooltip.classList.add('show');
+      setTimeout(() => tooltip.classList.remove('show'), 1500);
+    }
+
+    function clearEncodeFields() {
+      document.getElementById('messageInput').value = '';
+      document.getElementById('encodedOutput').value = '';
+      autoResizeTextarea(document.getElementById('messageInput'));
+      autoResizeTextarea(document.getElementById('encodedOutput'));
+    }
+
+    function clearDecodeFields() {
+      document.getElementById('secretInput').value = '';
+      document.getElementById('decodedOutput').value = '';
+      autoResizeTextarea(document.getElementById('secretInput'));
+      autoResizeTextarea(document.getElementById('decodedOutput'));
+    }
+
+    window.addEventListener('load', () => {
+      document.querySelectorAll('textarea').forEach(autoResizeTextarea);
+    });
+  </script>
+
+</body>
+</html>
