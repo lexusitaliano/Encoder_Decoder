@@ -192,9 +192,9 @@
 
   <section id="landing" class="container landing" aria-labelledby="landingTitle">
     <h1 id="landingTitle">Encoder &amp; Decoder</h1>
-    <p>A simple, offline workspace for your messages.</p>
+    <p>A simple, encoding and decoding system</p>
     <button id="enterButton" type="button">Enter</button>
-    <p><small>This privacy lock clears messages after 10 minutes of inactivity.<br>It is not authentication or secure encryption.</small></p>
+    <p><small>This privacy lock clears data entry after 10 minutes of inactivity.<br>It is not authentication or secure encryption.</small></p>
   </section>
   <p id="sessionNotice" role="status" aria-live="polite" aria-atomic="true"></p>
   <main id="application" hidden inert>
@@ -421,7 +421,7 @@
       landing.hidden = false;
       notice.textContent = expired
         ? 'Session expired due to inactivity. All messages have been cleared.'
-        : 'Logged out. All messages have been cleared.';
+        : '';
       if (moveFocus) document.getElementById('enterButton').focus();
     }
 
